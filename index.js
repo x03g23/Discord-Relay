@@ -88,12 +88,16 @@ http.createServer((req, res) => {
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
       try {
-        const event = JSON.parse(body);
-        if (event.type === 'MESSAGE' && event.user?.type !== 'BOT') {
-          const sender = event.user.displayName;
-          const text = event.message.argumentText || event.message.text || '(Sent an attachment)';
+        const raw = JSON.parse(body);
+        const event = raw.chat?.messagePayload || raw;
+        const message = event.message;
+        const user = event.user || raw.chat?.user;
 
-          await fetch(DISCORD_WEBHOOK_URL, {
+        if (message && user?.type !== 'BOT') {
+          const sender = user?.displayName || 'Google Chat User';
+          const text = message.argumentText || message.text || '(Sent an attachment)';
+
+          const webhookRes = await fetch(DISCORD_WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -101,7 +105,12 @@ http.createServer((req, res) => {
               content: text
             })
           });
-          console.log('Forwarded Google Chat message to Discord');
+
+          if (!webhookRes.ok) {
+            console.error('Discord Webhook error:', webhookRes.status, await webhookRes.text());
+          } else {
+            console.log('Forwarded Google Chat message to Discord');
+          }
         }
       } catch (err) {
         console.error('Error handling Google Chat event:', err);
