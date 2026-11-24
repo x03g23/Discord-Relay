@@ -16,10 +16,11 @@ const SA_EMAIL = process.env.SA_EMAIL;
 const SA_PRIVATE_KEY = (process.env.SA_PRIVATE_KEY || '').replace(/\\n/g, '\n');
 const GCHAT_SPACE_ID = "spaces/AAQAKdeQ1Bw";
 
-// Split URLs so browser clipboard tools cannot strip paths
-const OAUTH_TOKEN_URL = 'https://' + '://googleapis.com';
-const CHAT_BOT_SCOPE = 'https://' + '://googleapis.com';
-const CHAT_API_BASE = 'https://' + '://googleapis.com';
+// Assemble Google domains dynamically to prevent clipboard/browser URL rewriting
+const G_DOMAIN = ['google', 'apis', '.com'].join('');
+const OAUTH_TOKEN_URL = `https://oauth2.${G_DOMAIN}/token`;
+const CHAT_BOT_SCOPE = `https://www.${G_DOMAIN}/auth/chat.bot`;
+const CHAT_API_BASE = `https://chat.${G_DOMAIN}/v1`;
 
 // Helper: Generates a Google Chat Bot OAuth2 token using your Service Account
 async function getGoogleAccessToken() {
