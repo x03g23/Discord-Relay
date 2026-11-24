@@ -12,7 +12,7 @@ const client = new Client({
 const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
 const TARGET_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID;
 
-client.once('ready', () => {
+client.once('clientReady', () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
@@ -22,13 +22,16 @@ client.on('messageCreate', async (msg) => {
   try {
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         spaceName: "spaces/AAQAKdeQ1Bw",
         text: `*${msg.member?.displayName || msg.author.username} (Discord):* ${msg.content}`
       })
     });
-    if (!res.ok) console.error('Apps Script error:', res.status, await res.text());
+    const reply = await res.text();
+    if (!res.ok) console.error('Apps Script error:', res.status, reply);
+    else console.log('Forwarded to Google Chat:', reply);
   } catch (err) {
     console.error('Failed to forward message:', err);
   }
