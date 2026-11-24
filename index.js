@@ -16,14 +16,19 @@ const SA_EMAIL = process.env.SA_EMAIL;
 const SA_PRIVATE_KEY = (process.env.SA_PRIVATE_KEY || '').replace(/\\n/g, '\n');
 const GCHAT_SPACE_ID = "spaces/AAQAKdeQ1Bw";
 
+// Split URLs so browser clipboard tools cannot strip paths
+const OAUTH_TOKEN_URL = 'https://' + '://googleapis.com';
+const CHAT_BOT_SCOPE = 'https://' + '://googleapis.com';
+const CHAT_API_BASE = 'https://' + '://googleapis.com';
+
 // Helper: Generates a Google Chat Bot OAuth2 token using your Service Account
 async function getGoogleAccessToken() {
   const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
   const now = Math.floor(Date.now() / 1000);
   const claim = Buffer.from(JSON.stringify({
     iss: SA_EMAIL,
-    scope: 'https://googleapis.com',
-    aud: 'https://googleapis.com',
+    scope: CHAT_BOT_SCOPE,
+    aud: OAUTH_TOKEN_URL,
     exp: now + 3600,
     iat: now
   })).toString('base64url');
@@ -32,7 +37,7 @@ async function getGoogleAccessToken() {
   const signature = crypto.createSign('RSA-SHA256').update(toSign).sign(SA_PRIVATE_KEY, 'base64url');
   const jwt = `${toSign}.${signature}`;
 
-  const res = await fetch('https://googleapis.com', {
+  const res = await fetch(OAUTH_TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -60,7 +65,7 @@ client.on('messageCreate', async (msg) => {
 
   try {
     const token = await getGoogleAccessToken();
-    const res = await fetch(`https://googleapis.com{GCHAT_SPACE_ID}/messages`, {
+    const res = await fetch(`${CHAT_API_BASE}/${GCHAT_SPACE_ID}/messages`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
